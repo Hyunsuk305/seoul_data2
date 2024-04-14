@@ -1,5 +1,6 @@
 package com.example.seoul_data.model;
 
+import com.example.seoul_data.exception.UserRoleEnum;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -22,17 +23,22 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Column(nullable = false, length = 30)
+    @Enumerated(value = EnumType.STRING)
+    private UserRoleEnum role;
 
     @Builder
-    private User(String username, String password) {
+    private User(String username, String password,UserRoleEnum role) {
         this.username = username;
         this.password = password;
+        this.role = role;
     }
 
-    public static User of(String username, String password) {
+    public static User of(String username, String password, UserRoleEnum role) {
         return User.builder()
                 .username(username)
                 .password(password)
+                .role(role)
                 .build();
     }
 

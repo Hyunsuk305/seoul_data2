@@ -1,18 +1,18 @@
 package com.example.seoul_data.service;
 
 import com.example.seoul_data.common.ApiResponseDto;
-import com.example.seoul_data.common.SuccessResponseDto;
 import com.example.seoul_data.common.ResponseUtil;
-import com.example.seouldata.dto.CommentRequestDto;
-import com.example.seouldata.dto.CommentResponseDto;
+import com.example.seoul_data.common.SuccessResponseDto;
+import com.example.seoul_data.dto.CommentRequestDto;
+import com.example.seoul_data.dto.CommentResponseDto;
 import com.example.seoul_data.exception.ResourceNotFoundException;
+import com.example.seoul_data.exception.UserRoleEnum;
 import com.example.seoul_data.model.Board;
 import com.example.seoul_data.model.Comment;
 import com.example.seoul_data.model.User;
 import com.example.seoul_data.repository.BoardRepository;
 import com.example.seoul_data.repository.CommentRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,19 +36,16 @@ public class CommentService {
         }
 
         Long parentCommentId = requestDto.getParentCommentId();
-        Comment comment = Comment.of(requestDto, board.get(), user);
-        if (parentCommentId == null) {  // parentComment 가 없다면
-            commentRepository.save(comment);    // 바로 저장
-            return ResponseUtil.ok(CommentResponseDto.from(comment));
+        Comment comment = new Comment(requestDto.getTitle(), requestDto.getContent());
+        comment.setBoard(board.get());
+        if (parentCommentId != null) {  // parentComment 가 있다면
+            Comment parentComment = commentRepository.findById(parentCommentId)
+                    .orElseThrow(() -> new ResourceNotFoundException("댓글을 찾을 수 없습니다."));
+            parentComment.addChildComment(comment); // parentComment 에 childComment 추가
         }
-        // parentComment 가 있다면 parent comment 에 childComment 를 추가
-        Comment parentComment = commentRepository.findById(parentCommentId)
-                .orElseThrow(() -> new ResourceNotFoundException("댓글을 찾을 수 없습니다.")); // Use ResourceNotFoundException
-        parentComment.addChildComment(comment); // parentComment 에 childComment 추가
         commentRepository.save(comment);
 
-        return ResponseUtil.ok(CommentResponseDto.from(comment));
-
+        return ResponseUtil.ok(new CommentResponseDto());
     }
 
     // 댓글 수정
@@ -68,12 +65,12 @@ public class CommentService {
         }
 
         // 관리자이거나, 댓글의 작성자와 수정하려는 사용자의 정보가 일치한다면, 댓글 수정
-        comment.get().update(requestDto, user);
+        comment.get().setTitle(requestDto.getTitle());
+        comment.get().setContent(requestDto.getContent());
         commentRepository.flush();   // responseDto 에 modifiedAt 업데이트 해주기 위해 saveAndFlush 사용
 
         // ResponseEntity 에 dto 담아서 리턴
-        return ResponseUtil.ok(CommentResponseDto.from(comment.get()));
-
+        return ResponseUtil.ok(new CommentResponseDto());
     }
 
     // 댓글 삭제
@@ -91,5 +88,8 @@ public class CommentService {
         if (found.isEmpty() && user.getRole() == UserRoleEnum.USER) {
             throw new ResourceNotFoundException("댓글 작성자만 삭제 가능합니다.");
         }
+
+        commentRepository.deleteById(id); // 댓글 삭제
+        return ResponseUtil.ok(new SuccessResponseDto("댓글이 삭제되었습니다."));
     }
 }

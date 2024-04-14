@@ -1,7 +1,5 @@
 package com.example.seoul_data.common;
 
-import org.springframework.web.ErrorResponse;
-
 public class ResponseUtil {
 
     // 요청 성공인 경우
@@ -19,5 +17,4 @@ public class ResponseUtil {
                 .error(response)
                 .build();
     }
-
 }

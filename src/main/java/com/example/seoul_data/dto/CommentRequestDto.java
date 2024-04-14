@@ -1,5 +1,5 @@
 // CommentRequestDto
-package com.example.seouldata.dto;
+package com.example.seoul_data.dto;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,10 +10,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class CommentRequestDto {
     private String content;
-
-    public CommentRequestDto(String content) {
-        this.content = content;
-    }
+    Long parentCommentId;
 
     // 게터, 세터, 생성자 등 필요한 메서드 추가
 }
